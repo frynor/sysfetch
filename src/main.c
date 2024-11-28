@@ -2,6 +2,21 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <sys/utsname.h>
+
+
+void systemInfo() {
+	struct utsname system_info;
+
+	if (uname(&system_info) != 0) {
+		perror("Failed to create utsname struct!\n");
+		exit(EXIT_FAILURE);
+	}
+
+	printf("\033[32mSystem:\033[0m \033[34m%s\033[0m\n", system_info.sysname);
+	printf("\033[32mMachine:\033[0m \033[34m%s\033[0m\n", system_info.machine);
+
+}
 
 void gpuInfo(char* buffer, size_t size) {
 	FILE *file = fopen("/proc/driver/nvidia/gpus/0000:01:00.0/information", "r");
@@ -30,7 +45,7 @@ void gpuInfo(char* buffer, size_t size) {
 				end--;
 			}
 			*(end + 1) = '\0';
-			printf("GPU: %s\n", model_name);
+			printf("\033[32mGPU:\033[0m \033[34m%s\033[0m\n", model_name);
 			break;
 		}		
 	}
@@ -118,7 +133,7 @@ void memInfo(char* buffer, size_t size) {
 		}
 	}
 	int total = sizeTotal - sizeCached - sizeBuffers - sizeFree;
-	printf("Memory: %dMiB / %dMiB\n", total, sizeTotal);
+	printf("\033[32mMemory:\033[0m \033[34m%dMiB / %dMiB\033[0m\n", total, sizeTotal);
 	fclose(file);
 }
 
@@ -140,7 +155,7 @@ void linuxInfo(char* buffer, size_t size) {
 				*version_end = '\0';
 			}
 
-			printf("Kernel: %s\n", version_start);
+			printf("\033[32mKernel:\033[0m \033[34m%s\033[0m\n", version_start);
 		}
 	}
 
@@ -160,7 +175,7 @@ void cpuInfo(char* buffer, size_t size) {
 		if (strncmp(buffer, "model name", 10) == 0) {
 			char *model_name = strchr(buffer, ':');
 		       	if (model_name != NULL) {
-				printf("CPU: %s", model_name + 2);
+				printf("\033[32mCPU:\033[0m \033[34m%s\033[0m", model_name + 2);
 			}
 			break;	
 		}	
@@ -173,9 +188,10 @@ int main() {
 	size_t size = 256;
 	char buffer[size];
 
-	cpuInfo(buffer, size);
+	systemInfo();
 	linuxInfo(buffer, size);
 	memInfo(buffer, size);
+	cpuInfo(buffer, size);
 	gpuInfo(buffer, size);
 
 	return 0;
