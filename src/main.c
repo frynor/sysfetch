@@ -5,6 +5,18 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
+void soundInfo(char* buffer, size_t size) {
+	FILE *file = fopen("/proc/asound/version", "r");
+	if (file == NULL) {
+		perror("Failed to open /proc/asound/version!\n");
+		return;
+	}
+
+	while (fgets(buffer, size, file)) {
+		printf("\033[32mSound version:\033[0m \033[34m%s\033[0m\n", buffer);
+	}
+}
+
 void systemInfo() {
 	struct utsname system_info;
 
@@ -15,12 +27,33 @@ void systemInfo() {
 
 	char* username = getlogin();
 	if (username != NULL) {
-		printf("\033[34m%s\033[0m@\033[34m%s\033[0m\n", username, system_info.nodename);
+		printf("\n\033[34m%s\033[0m@\033[34m%s\033[0m\n", username, system_info.nodename);
 	}
 
+	printf("--------------------\n");
 	printf("\033[32mSystem:\033[0m \033[34m%s\033[0m\n", system_info.sysname);
 	printf("\033[32mMachine:\033[0m \033[34m%s\033[0m\n", system_info.machine);
 
+}
+
+void uptimeInfo() {
+	FILE *file = fopen("/proc/uptime", "r");
+
+	if (file == NULL) {
+		perror("Failed to open /proc/uptime file!\n");
+		return;
+	}
+
+	double total_uptime;
+	if (fscanf(file, "%lf", &total_uptime) == 1) {
+		int hours = (int)total_uptime / 3600;
+		int minutes = ((int)total_uptime % 3600) / 60;
+		int seconds = (int)total_uptime % 60;
+		
+		printf("\033[32mSystem Uptime:\033[0m \033[34m%d hours, %d minutes, %d seconds\033[0m\n", hours, minutes, seconds);
+	}
+
+	fclose(file);
 }
 
 void gpuInfo(char* buffer, size_t size) {
@@ -198,6 +231,8 @@ int main() {
 	memInfo(buffer, size);
 	cpuInfo(buffer, size);
 	gpuInfo(buffer, size);
+	uptimeInfo();
+	soundInfo(buffer, size);
 
 	return 0;
 	
