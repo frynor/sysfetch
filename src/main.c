@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <sys/utsname.h>
-
+#include <unistd.h>
 
 void systemInfo() {
 	struct utsname system_info;
@@ -11,6 +11,11 @@ void systemInfo() {
 	if (uname(&system_info) != 0) {
 		perror("Failed to create utsname struct!\n");
 		exit(EXIT_FAILURE);
+	}
+
+	char* username = getlogin();
+	if (username != NULL) {
+		printf("\033[34m%s\033[0m@\033[34m%s\033[0m\n", username, system_info.nodename);
 	}
 
 	printf("\033[32mSystem:\033[0m \033[34m%s\033[0m\n", system_info.sysname);
