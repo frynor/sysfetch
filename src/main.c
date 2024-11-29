@@ -4,6 +4,8 @@
 #include <ctype.h>
 #include <sys/utsname.h>
 #include <unistd.h>
+#include "clarg.h"
+
 
 void soundInfo(char* buffer, size_t size) {
 	FILE *file = fopen("/proc/asound/version", "r");
@@ -13,7 +15,7 @@ void soundInfo(char* buffer, size_t size) {
 	}
 
 	while (fgets(buffer, size, file)) {
-		printf("\033[32mSound version:\033[0m \033[34m%s\033[0m\n", buffer);
+		printf("\033[32mSound Version:\033[0m \033[34m%s\033[0m", buffer);
 	}
 }
 
@@ -30,7 +32,7 @@ void systemInfo() {
 		printf("\n\033[34m%s\033[0m@\033[34m%s\033[0m\n", username, system_info.nodename);
 	}
 
-	printf("--------------------\n");
+	printf("-----------------------\n");
 	printf("\033[32mSystem:\033[0m \033[34m%s\033[0m\n", system_info.sysname);
 	printf("\033[32mMachine:\033[0m \033[34m%s\033[0m\n", system_info.machine);
 
@@ -84,6 +86,8 @@ void gpuInfo(char* buffer, size_t size) {
 			}
 			*(end + 1) = '\0';
 			printf("\033[32mGPU:\033[0m \033[34m%s\033[0m\n", model_name);
+			printf("-----------------------\n\n");
+
 			break;
 		}		
 	}
@@ -222,17 +226,41 @@ void cpuInfo(char* buffer, size_t size) {
 	fclose(file);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+	SystemConfig config;
+
+	parse_arguments(argc, argv, &config);
+
 	size_t size = 256;
 	char buffer[size];
 
 	systemInfo();
+	if (config.show_kernel) {
+		linuxInfo(buffer, size);
+	}
+	if (config.show_memory) {
+		memInfo(buffer, size);
+	}
+	if (config.show_uptime) {
+		uptimeInfo();
+	}
+	if (config.show_sound) {
+		soundInfo(buffer, size);
+	}
+	if (config.show_cpu) {
+		cpuInfo(buffer, size);
+	}
+	if (config.show_gpu) {
+		gpuInfo(buffer, size);
+	}
+
+	/* systemInfo();
 	linuxInfo(buffer, size);
 	memInfo(buffer, size);
 	cpuInfo(buffer, size);
 	gpuInfo(buffer, size);
 	uptimeInfo();
-	soundInfo(buffer, size);
+	soundInfo(buffer, size); */
 
 	return 0;
 	
