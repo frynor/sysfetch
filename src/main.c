@@ -6,6 +6,33 @@
 #include <unistd.h>
 #include "clarg.h"
 
+void crossPlatformGPU(char* buffer, size_t size) {
+	FILE *file = popen("lspci | grep -i 'vga'", "r");
+	if (file == NULL) {
+		perror("Failed to open GPU file!\n");
+		return;
+	}
+
+	char gpu_name[128] = {0};
+
+	if (fgets(buffer, size, file) != NULL) {
+		char *start = strchr(buffer, '[');
+		char *end = strchr(buffer, ']');
+		
+		if (start && end) {
+			strncpy(gpu_name, start + 1, end - start - 1);
+			gpu_name[end - start - 1] = '\0';
+
+			printf("\033[32mGPU:\033[0m \033[34m%s\033[0m\n", gpu_name);
+			printf("-----------------------\n\n");
+		} else {
+			printf("Could not parse GPU name\n");
+		}
+	}
+
+	pclose(file);
+}
+
 
 void soundInfo(char* buffer, size_t size) {
 	FILE *file = fopen("/proc/asound/version", "r");
@@ -53,43 +80,6 @@ void uptimeInfo() {
 		int seconds = (int)total_uptime % 60;
 		
 		printf("\033[32mSystem Uptime:\033[0m \033[34m%d hours, %d minutes, %d seconds\033[0m\n", hours, minutes, seconds);
-	}
-
-	fclose(file);
-}
-
-void gpuInfo(char* buffer, size_t size) {
-	FILE *file = fopen("/proc/driver/nvidia/gpus/0000:01:00.0/information", "r");
-	
-	if (file == NULL) {
-		perror("Failed to open GPU file!\n");
-		return;
-	}
-	
-	while (fgets(buffer, size, file)) {
-		char* model_name = strstr(buffer, "Model:");
-		if (model_name != NULL) {
-			model_name += strlen("Model:");
-
-			while (isspace((unsigned char)*model_name)) {
-				model_name++;
-			}
-
-			char* model_name_end = strchr(model_name, '\n');
-			if (model_name_end != NULL) {
-				*model_name_end = '\0';
-			}
-
-			char* end = model_name + strlen(model_name) - 1;
-			while (end > model_name && *end == ' ') {
-				end--;
-			}
-			*(end + 1) = '\0';
-			printf("\033[32mGPU:\033[0m \033[34m%s\033[0m\n", model_name);
-			printf("-----------------------\n\n");
-
-			break;
-		}		
 	}
 
 	fclose(file);
@@ -251,7 +241,7 @@ int main(int argc, char *argv[]) {
 		cpuInfo(buffer, size);
 	}
 	if (config.show_gpu) {
-		gpuInfo(buffer, size);
+		crossPlatformGPU(buffer, size);
 	}
 
 	/* systemInfo();
