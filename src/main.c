@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <sys/utsname.h>
 #include <unistd.h>
 #include "clarg.h"
